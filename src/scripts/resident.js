@@ -32,7 +32,7 @@ function changeContent(page) {
 			contentDiv.innerHTML =
 				`<h2>Account Summary</h2>
 				<p>
-					Hello NAME, here is your account summary!
+					Hello, here is your account summary!
 				</p>
 				<form>
 				<label for="name">Name:</label>
