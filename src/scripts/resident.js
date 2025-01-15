@@ -4,17 +4,14 @@ function changeContent(page) {
 	switch (page) {
 		case 'earn':
 			contentDiv.innerHTML = `
-				<img src=
-"https://th.bing.com/th/id/OIP.jKdzsrOIpp5_pMiNfL068AAAAA?w=305&h=69&c=7&r=0&o=5&dpr=1.3&pid=1.7">
 				<h2>
-					Welcome to the Home Page!
+					Welcome to the Task Board!
 				</h2>
 				<p>
-					This is the main page of our SPA.
+					These are the available tasks that can be accepted!
 				</p>
 				<p>
-					Explore the different sections using
-					the navigation menu.
+					Do complete them to earn vouchers to be used in the mama mart!
 				</p>
 			`;
 			break;
