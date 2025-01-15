@@ -1,12 +1,13 @@
 // Dummy credentials
 const validCredentials = {
-    username: "user123",
+    username: "resident123",
     password: "password123"
-    name: "Sam"
 };
 
-// List of home pages
-const homePages = ["admin.html", "resident.html"];
+const adminCredentials = {
+    username: "admin123",
+    password: "password123"
+};
 
 // Login form handling
 document.getElementById("login-form").addEventListener("submit", (e) => {
@@ -18,9 +19,11 @@ document.getElementById("login-form").addEventListener("submit", (e) => {
 
     // Check credentials
     if (username === validCredentials.username && password === validCredentials.password) {
-        // Redirect to a random home page
-        const randomHome = homePages[Math.floor(Math.random() * homePages.length)];
-        window.location.href = randomHome;
+        localStorage.setItem("isLoggedIn", true);
+        window.location.href = "resident.html";
+    } else if (username === adminCredentials.username && password === adminCredentials.password) {
+        localStorage.setItem("isLoggedIn", true);
+        window.location.href = "admin.html";
     } else {
         // Show error message
         document.getElementById("error-message").classList.remove("hidden");
