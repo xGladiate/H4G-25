@@ -1,3 +1,7 @@
+function logout() {
+    window.location.href = "index.html";
+}
+
 function changeContent(page) {
 	var contentDiv = document.getElementById('content');
 
@@ -28,7 +32,7 @@ function changeContent(page) {
 				</p>
 			`;
 			break;
-		case 'account':
+		case 'resident-account':
 			contentDiv.innerHTML =
 				`<h2>Account Summary</h2>
 				<p>

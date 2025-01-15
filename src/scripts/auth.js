@@ -19,8 +19,10 @@ document.getElementById("login-form").addEventListener("submit", (e) => {
 
     // Check credentials
     if (username === validCredentials.username && password === validCredentials.password) {
+        localStorage.setItem("isLoggedIn", true);
         window.location.href = "resident.html";
     } else if (username === adminCredentials.username && password === adminCredentials.password) {
+        localStorage.setItem("isLoggedIn", true);
         window.location.href = "admin.html";
     } else {
         // Show error message
