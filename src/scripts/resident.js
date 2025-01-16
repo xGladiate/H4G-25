@@ -1,89 +1,132 @@
+import supabase from './supabase.js'; // Import the existing Supabase client
+
+// Function to log out
 function logout() {
     window.location.href = "index.html";
 }
 
-function acceptTask() {
-    //Change the page to show that could not take any other task
-    //Update the home page to indicate the new task
+async function acceptTask(taskId) {
+    const { data, error } = await supabase
+        .from('tasks')
+        .update({ status: 'IN_PROGRESS' })
+        .eq('id', taskId);
+
+    if (error) {
+        console.error('Error accepting task:', error.message);
+        alert('Failed to accept task. Try again.');
+    } else {
+        alert(`Task ${taskId} successfully accepted!`);
+        // Optionally refresh the task board
+        await changeContent('earn');
+    }
 }
 
-function completeTask(taskName) {
-    //Allow confirmation of Task
+
+// Function to complete a task
+async function completeTask(taskName) {
     const userConfirmed = confirm(`Are you sure that you have completed "${taskName}"?`);
     if (userConfirmed) {
         alert(`You have successfully completed "${taskName}".`);
-        // Here, you can also add logic to mark the task as accepted in your system.
+        // Add any additional logic to update task status if needed
     } else {
         alert(`Keep up the good work!`);
     }
 }
 
-function changeContent(page) {
-	var contentDiv = document.getElementById('content');
+// Function to fetch tasks dynamically
+async function fetchTasks() {
+    const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('description, point, id, status')
+        .eq('status', 'AVAILABLE'); // Fetch only available tasks
 
-	switch (page) {
-		case 'earn':
-			contentDiv.innerHTML = `
-				<h2>
-					Task Board
-				</h2>
-				<p>
-                     Welcome to the Task Board!
-                 </p>
-				<p>
-					These are the available tasks that can be accepted!
-				</p>
-				<p>
-					Do complete them to earn vouchers to be used in the mama mart!
-				</p>
-			`;
-			break;
-		case 'buy':
-			contentDiv.innerHTML = `
-				<h2>Store</h2>
-				<p>
-					This is the mama mart store. Earn vouchers
-					to purchase the goods in here!
-				</p>
-				<p>
-					Note: Delivery of goods would be done by
-					admins!
-				</p>
-
-				<form>
-                    <div class="info-box">
-                        <label for="name">
-                            Wash Dishes for dinner (100 Points)
-                            <button id="accept-button" onclick="acceptTask()" class="accept-button">Accept</button>
-                        </label>
-                    </div>
-                </form>
-			`;
-			break;
-		case 'resident-account':
-			contentDiv.innerHTML =
-				`<h2>Account Summary</h2>
-				<p>
-					Hello, here is your account summary!
-				</p>
-				<form>
-                    <label for="name"><strong>Current Accepted Task</strong></label>
-                    <div class="info-box" onclick="completeTask('taskName')">
-                        Mop the level 3 floor.
-                    <button id="complete-button" onclick="completeTask('taskName')" class="complete-button">Completed</button>
-                    </div>
-                    <label for="name"><strong>Voucher Balance</strong></label>
-                    <div class="info-box">
-                        100 Points
-                    </div>
-                    <label for="name"><strong>Transaction History</strong></label>
-                    <div class="info-box">
-                        21/1/2025    Pen    5 Points
-                    </div>
-                </form>`;
-			break;
-
-		default:
-			contentDiv.innerHTML = '<h2>Page not found!</h2>';
-	}
+    if (error) {
+        console.error('Error fetching tasks:', error.message);
+        return [];
+    }
+    return tasks;
 }
+async function changeContent(page) {
+    const contentDiv = document.getElementById('content');
+
+    switch (page) {
+        case 'earn':
+            // Fetch tasks and sort them by points in descending order
+            const tasks = await fetchTasks();
+            if (!tasks.length) {
+                contentDiv.innerHTML = `
+                    <h2>Task Board</h2>
+                    <p>No tasks available at the moment. Please check back later!</p>
+                `;
+                return;
+            }
+
+            // Sort tasks by points (highest points first)
+            tasks.sort((a, b) => b.point - a.point);
+
+            contentDiv.innerHTML = `
+                <h2>Task Board</h2>
+                <p>Welcome to the Task Board!</p>
+                <p>Complete these tasks to earn vouchers for the mama mart!</p>
+                <div id="task-list"></div>
+            `;
+
+            const taskList = document.getElementById('task-list');
+            tasks.forEach((task, index) => {
+                const listItem = document.createElement('div');
+                listItem.classList.add('task-item');
+
+                // Add a rank based on the task's position
+                const rank = index + 1;
+
+                listItem.innerHTML = `
+                    <div class="info-box">
+                        <strong>#${rank}</strong> ${task.description} 
+                        (${task.point} Points)
+                        <button class="accept-button" data-task-id="${task.id}">
+                            Accept
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(listItem);
+            });
+
+            // Attach event listeners to the dynamically generated buttons
+            document.querySelectorAll('.accept-button').forEach((button) => {
+                button.addEventListener('click', async (e) => {
+                    const taskId = e.target.getAttribute('data-task-id');
+                    await acceptTask(taskId); // Pass task ID to the `acceptTask` function
+                });
+            });
+            break;
+
+        case 'buy':
+            contentDiv.innerHTML = `
+                <h2>Store</h2>
+                <p>Welcome to the mama mart store! Earn vouchers to purchase items here!</p>
+                <p>Note: Delivery of goods will be handled by admins.</p>
+            `;
+            break;
+
+        case 'resident-account':
+            contentDiv.innerHTML = `
+                <h2>Account Summary</h2>
+                <p>Hello! Here's your account summary:</p>
+                <div class="info-box"><strong>Current Accepted Task:</strong> Mop the level 3 floor.</div>
+                <button id="complete-button" class="complete-button">Mark as Completed</button>
+                <div class="info-box"><strong>Voucher Balance:</strong> 100 Points</div>
+                <div class="info-box"><strong>Transaction History:</strong> 21/1/2025 - Pen - 5 Points</div>
+            `;
+
+            document.getElementById('complete-button').addEventListener('click', () => {
+                completeTask('Mop the level 3 floor');
+            });
+            break;
+
+        default:
+            contentDiv.innerHTML = '<h2>Page not found!</h2>';
+    }
+}
+
+
+export { changeContent, logout }; // Export functions if needed for other files
