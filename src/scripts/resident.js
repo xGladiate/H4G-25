@@ -81,7 +81,18 @@ async function completeTask(taskName) {
     }
 }
 
+async function fetchAvailableProducts() {
+    const { data: products, error } = await supabase
+        .from('inventory')
+        .select('name, point, id, quantity')
+        .gt('quantity', 1); // Fetch only products with quantity > 0
 
+        if (error) {
+            console.error('Error fetching products:', error.message);
+            return [];
+        }
+        return products;
+}
 
 // Function to fetch tasks dynamically
 async function fetchTasks() {
@@ -204,7 +215,7 @@ async function changeContent(page) {
                 listItem.innerHTML = `
                     <div class="info-box">
                         <strong>#${rank}</strong> ${task.description} 
-                        (${task.point} Points)
+                        (${task.point} Vouchers)
                         <button class="accept-button" data-description="${task.description}" data-task-id="${task.id}">
                             Accept
                         </button>
@@ -224,44 +235,28 @@ async function changeContent(page) {
             break;
 
         case 'buy':
+            // Fetch products and sort them by points in descending order
+            const products = await fetchAvailableProducts();
+            if (!products.length) {
+                contentDiv.innerHTML = `
+                    <h2>Store</h2>
+                    <p>No products available at the moment. Please check back later!</p>
+                `;
+                return;
+            }
+
+            // Sort products by points (highest points first)
+            products.sort((a, b) => b.point - a.point);
+
+
             contentDiv.innerHTML = `
                 <h2>Store</h2>
                 <p>Welcome to the mama mart store! Earn vouchers to purchase items here!</p>
                 <p>Note: Delivery of goods will be handled by admins.</p>
-                <form>
-                    <div class="product-list-box">
-                        <ol>
-                            <label for="name">
-                                Pen (5 Points)
-                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
-                            </label>
-                        </ol>
-                        <ol>
-                            <label for="name">
-                                Basketball (15 Points)
-                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
-                            </label>
-                        </ol>
-                        <ol>
-                            <label for="name">
-                                Pokemon Bedsheet (35 Points)
-                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
-                            </label>
-                        </ol>
-                    </div>
-                </form>
+                <div id="product-list"></div>
             `;
 
-            // Attach event listeners to the dynamically generated buttons
-            document.querySelectorAll('.buy-button').forEach((button) => {
-                button.addEventListener('click', async (e) => {
-                    const productId = e.target.getAttribute('data-product-id');
-                    const productPrice = e.target.getAttribute('data-price');
-                    await buyProduct(productId, productPrice); // Pass product ID to the `buyProduct` function
-                });
-            });
-
-            /*const productList = document.getElementById('product-list');
+            const productList = document.getElementById('product-list');
             products.forEach((product, index) => {
                 const listProduct = document.createElement('div');
                 listProduct.classList.add('product-item');
@@ -269,17 +264,27 @@ async function changeContent(page) {
                 // Add a rank based on the product's position
                 const rank = index + 1;
 
-                listItem.innerHTML = `
+                listProduct.innerHTML = `
                     <div class="info-box">
                         <strong>#${rank}</strong> ${product.name} 
-                        (${product.price} Points)
-                        <button class="buy-button" data-product-id="${product.id}">
+                        (${product.point} Vouchers)
+                        <button class="buy-button" data-name="${product.name}" data-product-id="${product.id} data-product-id="${product.point}">
                             Buy
                         </button>
                     </div>
                 `;
-                productList.appendChild(listItem);
-            });*/
+                productList.appendChild(listProduct);
+            });
+
+            // Attach event listeners to the dynamically generated buttons
+            document.querySelectorAll('.buy-button').forEach((button) => {
+                button.addEventListener('click', async (e) => {
+                    const productId = e.target.getAttribute('data-product-id');
+                    const productName = e.target.getAttribute('data-name');
+                    const productPoint = e.target.getAttribute('data-point');
+                    await buyProduct(productId, productName, productPoint); // Pass product ID to the `buyProduct` function
+                });
+            }); 
 
             break;
 
