@@ -133,7 +133,50 @@ async function changeContent(page) {
                 <h2>Store</h2>
                 <p>Welcome to the mama mart store! Earn vouchers to purchase items here!</p>
                 <p>Note: Delivery of goods will be handled by admins.</p>
+                <form>
+                    <div class="product-list-box">
+                        <ol>
+                            <label for="name">
+                                Pen (5 Points)
+                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
+                            </label>
+                        </ol>
+                        <ol>
+                            <label for="name">
+                                Basketball (15 Points)
+                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
+                            </label>
+                        </ol>
+                        <ol>
+                            <label for="name">
+                                Pokemon Bedsheet (35 Points)
+                                <button id="buy-button" onclick="buyProduct()" class="buy-button">Buy</button>
+                            </label>
+                        </ol>
+                    </div>
+                </form>
             `;
+
+            /*const productList = document.getElementById('product-list');
+            tasks.forEach((task, index) => {
+                const listItem = document.createElement('div');
+                listItem.classList.add('task-item');
+
+                // Add a rank based on the task's position
+                const rank = index + 1;
+
+                listItem.innerHTML = `
+                    <div class="info-box">
+                        <strong>#${rank}</strong> ${task.description} 
+                        (${task.point} Points)
+                        <button class="accept-button" data-description="${task.description}" data-task-id="${task.id}">
+                            Accept
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(listItem);
+            });*/
+
             break;
 
         case 'resident-account':
