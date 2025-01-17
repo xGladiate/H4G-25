@@ -47,9 +47,12 @@ async function completeTask(taskName) {
     const userConfirmed = confirm(`Are you sure that you have completed "${taskName}"?`);
     if (userConfirmed) {
         alert(`You have successfully completed "${taskName}".`);
+        localStorage.setItem('currentTaskDesciption', null);
+        localStorage.setItem('currentTaskPoint', null);
         // Add any additional logic to update task status if needed
+        //clear user_id from task
     } else {
-        alert(`Keep up the good work!`);
+        alert(`Jiayou! You can do it!`);
     }
 }
 
@@ -86,30 +89,49 @@ async function fetchResidentTaskStatus() {
     localStorage.setItem('acceptedTask', has_tasks[0].has_task);
 }
 
+async function fetchCurrentTask() {
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    if (!residentId) {
+        console.error("Resident ID not set! Output: " + residentId);
+        return [];
+    }
+
+    const { data: has_tasks, error } = await supabase
+        .from("tasks")
+        .select("description, point")
+        .eq("user_id", residentId)
+        .eq("status", "IN_PROGRESS");
+
+    if (error) {
+        console.error("Error fetching task details for users:", error.message);
+        return [];
+    }
+    localStorage.setItem('currentTaskDesciption', has_tasks[0].description);
+    localStorage.setItem('currentTaskPoint', has_tasks[0].point);
+}
+
+async function fetchCurrentPoints() {
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    if (!residentId) {
+        console.error("Resident ID not set! Output: " + residentId);
+        return [];
+    }
+
+    const { data: currentPoint, error } = await supabase
+        .from("resident_account")
+        .select("points, name")
+        .eq("id", residentId); 
+    if (error) {
+        console.error("Error fetching task details for users:", error.message);
+        return [];
+    }
+    localStorage.setItem('currentPoint', currentPoint[0].points);
+    localStorage.setItem('name', currentPoint[0].name);
+}
+
 // function to buy a product from the store
 // @sharon: Need to reduce quantity of product in inventory by 1, need to reduce resident's point balance by the product price
 async function buyProduct() {
-    await fetchResidentTaskStatus();
-    if (accpetedTask) {
-        alert('You have already accepted a task. Please complete it before accepting another task.');
-    }
-    const { data, error } = await supabase
-        .from('tasks')
-        .update({ status: 'IN_PROGRESS' })
-        .eq('id', taskId);
-
-    if (error) {
-        console.error('Error accepting task:', error.message);
-        alert('Failed to accept task. Try again.');
-    } else {
-        const { data, error } = await supabase
-            .from('resident_account')
-            .update({ has_task: 'TRUE' })
-            .eq('id', residentId);
-        alert(`You have successfully accepted "${taskDescription}"!`);
-        // Optionally moves to the account page after accepting a task 
-        await changeContent('resident-account');
-    }
 }
 
 async function changeContent(page) {
@@ -119,7 +141,7 @@ async function changeContent(page) {
         case 'earn':
             // Fetch tasks and sort them by points in descending order
             const tasks = await fetchTasks();
-            const residentTaskStatus = await fetchResidentTaskStatus();
+            await fetchResidentTaskStatus();
             if (!tasks.length) {
                 contentDiv.innerHTML = `
                     <h2>Task Board</h2>
@@ -229,13 +251,29 @@ async function changeContent(page) {
             break;
 
         case 'resident-account':
+            await fetchCurrentTask();
+            await fetchCurrentPoints();
+            const taskDescription = localStorage.getItem('currentTaskDesciption');
+            const taskPoint = localStorage.getItem('currentTaskPoint');
+            const name = localStorage.getItem('name');
+            const currentPoint = localStorage.getItem('currentPoint');
+            const currentAcceptedTaskLabel = "Current Accepted Task: " + taskDescription + " (" + taskPoint + " Points)";
             contentDiv.innerHTML = `
                 <h2>Account Summary</h2>
-                <p>Hello! Here's your account summary:</p>
-                <div class="info-box"><strong>Current Accepted Task:</strong> Mop the level 3 floor.</div>
-                <button id="complete-button" class="complete-button">Mark as Completed</button>
-                <div class="info-box"><strong>Voucher Balance:</strong> 100 Points</div>
-                <div class="info-box"><strong>Transaction History:</strong> 21/1/2025 - Pen - 5 Points</div>
+                <p>Hello ${name}! Here's your account summary:</p>
+                <label for="name"><strong>Current Accepted Task</strong></label>
+                <div class="info-box"> 
+                    ${taskDescription} (${taskPoint} Points) 
+                    <button id="complete-button" class="complete-button">Mark as Completed</button>
+                </div>
+                <label for="name"><strong>Voucher Balance</strong></label>
+                <div class="info-box"> 
+                    ${currentPoint} Points 
+                </div>
+                <label for="name"><strong>Transaction History</strong></label>
+                <div class="info-box"> 
+                    21/1/2025 - Pen - 5 Points
+                </div>
             `;
 
             document.getElementById('complete-button').addEventListener('click', () => {
