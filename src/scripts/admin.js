@@ -12,7 +12,7 @@ function returnHome() {
 async function fetchAcceptedTasks() {
     const { data: tasks, error } = await supabase
         .from('tasks')
-        .select('description, point, user_id')
+        .select('description, point, user_id, id')
         .eq('status', 'COMPLETED'); // Fetch tasks with 'COMPLETED' status
 
     if (error) {
@@ -37,6 +37,7 @@ async function fetchUserName(user_id) {
 }
 
 async function approveTask(taskId, rowElement) {
+    console.log("Approving task with ID:", taskId); // Debug log
     const isApproved = window.confirm("Are you sure you want to approve this task?");
 
     if (!isApproved) {
@@ -99,7 +100,7 @@ async function showAcceptedTasks() {
             <td>${task.point}</td>
             <td>${userName}</td>
             <td>
-                <button class="approve-button">Approve</button>          
+                <button class="approve-button" data-task-id="${task.id}">Approve</button>          
             </td>
         `;
         const approveButton = row.querySelector('.approve-button');
