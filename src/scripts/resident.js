@@ -178,7 +178,42 @@ async function fetchCurrentPoints() {
 
 // function to buy a product from the store
 // @sharon: Need to reduce quantity of product in inventory by 1, need to reduce resident's point balance by the product price
-async function buyProduct() {
+async function buyProduct(productId, productName, productPoint, productQuantity) {
+    const userConfirmed = confirm(`Are you sure you want to buy "${productName}" for ${productPoint} points?`);
+    if (userConfirmed) {
+        const residentId = getResidentId(); // Retrieve residentId from the shared module
+        const currentPoint = parseInt(localStorage.getItem('currentPoint'), 10);
+        if (currentPoint < productPoint) {
+            console.log("Current Point: " + currentPoint);
+            console.log("Product Point: " + productPoint);
+            alert('You do not have enough points to purchase this item.');
+            return;
+        }
+
+        productQuantity -= 1; // Reduce quantity of product in inventory by 1
+
+        const { error: inventoryError } = await supabase
+            .from('inventory')
+            .update({ quantity: productQuantity }) // Reduce quantity of product in inventory by 1
+            .eq('id', productId);
+
+        const { error: residentAccountError } = await supabase
+            .from('resident_account')
+            .update({ points: currentPoint - productPoint }) // Reduce resident's point balance by the product price
+            .eq('id', residentId);
+
+        if (inventoryError) {
+            console.error('Error buying product:', inventoryError.message);
+            alert('Failed to buy product. Try again.');
+        } else if (residentAccountError) {
+            console.error('Error buying product:', residentAccountError.message);
+            alert('Failed to buy product. Try again.');
+        } else {
+            alert(`You have successfully purchased "${productName}" for ${productPoint} points!`);
+            await fetchCurrentPoints();
+            await changeContent('resident-account');
+        }
+    }
 }
 
 async function changeContent(page) {
@@ -271,7 +306,7 @@ async function changeContent(page) {
                     <div class="info-box">
                         <strong>#${rank}</strong> ${product.name} 
                         (${product.point} Vouchers)
-                        <button class="buy-button" data-name="${product.name}" data-product-id="${product.id} data-product-id="${product.point}">
+                        <button class="buy-button" data-name="${product.name}" data-quantity="${product.quantity}" data-product-id="${product.id}" data-point="${product.point}">
                             Buy
                         </button>
                     </div>
@@ -284,8 +319,9 @@ async function changeContent(page) {
                 button.addEventListener('click', async (e) => {
                     const productId = e.target.getAttribute('data-product-id');
                     const productName = e.target.getAttribute('data-name');
-                    const productPoint = e.target.getAttribute('data-point');
-                    await buyProduct(productId, productName, productPoint); // Pass product ID to the `buyProduct` function
+                    const productPoint = parseInt(e.target.getAttribute('data-point'), 10);
+                    const productQuantity = parseInt(e.target.getAttribute('data-quantity'), 10);
+                    await buyProduct(productId, productName, productPoint, productQuantity); // Pass product ID to the `buyProduct` function
                 });
             }); 
 
