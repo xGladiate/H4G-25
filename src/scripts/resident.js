@@ -72,6 +72,32 @@ async function fetchResidentTaskStatus() {
     return; 
 }
 
+// function to buy a product from the store
+// @sharon: Need to reduce quantity of product in inventory by 1, need to reduce resident's point balance by the product price
+async function buyProduct() {
+    await fetchResidentTaskStatus();
+    if (accpetedTask) {
+        alert('You have already accepted a task. Please complete it before accepting another task.');
+    }
+    const { data, error } = await supabase
+        .from('tasks')
+        .update({ status: 'IN_PROGRESS' })
+        .eq('id', taskId);
+
+    if (error) {
+        console.error('Error accepting task:', error.message);
+        alert('Failed to accept task. Try again.');
+    } else {
+        const { data, error } = await supabase
+            .from('resident_account')
+            .update({ has_task: 'TRUE' })
+            .eq('id', residentId);
+        alert(`You have successfully accepted "${taskDescription}"!`);
+        // Optionally moves to the account page after accepting a task 
+        await changeContent('resident-account');
+    }
+}
+
 async function changeContent(page) {
     const contentDiv = document.getElementById('content');
 
@@ -157,24 +183,33 @@ async function changeContent(page) {
                 </form>
             `;
 
-            /*const productList = document.getElementById('product-list');
-            tasks.forEach((task, index) => {
-                const listItem = document.createElement('div');
-                listItem.classList.add('task-item');
+            // Attach event listeners to the dynamically generated buttons
+            document.querySelectorAll('.buy-button').forEach((button) => {
+                button.addEventListener('click', async (e) => {
+                    const productId = e.target.getAttribute('data-product-id');
+                    const productPrice = e.target.getAttribute('data-price');
+                    await buyProduct(productId, productPrice); // Pass product ID to the `buyProduct` function
+                });
+            });
 
-                // Add a rank based on the task's position
+            /*const productList = document.getElementById('product-list');
+            products.forEach((product, index) => {
+                const listProduct = document.createElement('div');
+                listProduct.classList.add('product-item');
+
+                // Add a rank based on the product's position
                 const rank = index + 1;
 
                 listItem.innerHTML = `
                     <div class="info-box">
-                        <strong>#${rank}</strong> ${task.description} 
-                        (${task.point} Points)
-                        <button class="accept-button" data-description="${task.description}" data-task-id="${task.id}">
-                            Accept
+                        <strong>#${rank}</strong> ${product.name} 
+                        (${product.price} Points)
+                        <button class="buy-button" data-product-id="${product.id}">
+                            Buy
                         </button>
                     </div>
                 `;
-                taskList.appendChild(listItem);
+                productList.appendChild(listItem);
             });*/
 
             break;
