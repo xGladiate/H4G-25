@@ -40,3 +40,12 @@ Below are the rough layout for our web application
 5. Right-click on `index.html` at `src/pages/index.html`
 6. Select `Open with Live Server`
 7. Navigate to your browser, which should bring you to the login page of the web app
+
+### Test Account 
+Role: Admin
+Username: 123
+Password: 123
+
+Role: Resident
+Username: resident123
+Password: password123
