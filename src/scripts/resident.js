@@ -47,9 +47,12 @@ async function completeTask(taskName) {
     const userConfirmed = confirm(`Are you sure that you have completed "${taskName}"?`);
     if (userConfirmed) {
         alert(`You have successfully completed "${taskName}".`);
+        localStorage.setItem('currentTaskDesciption', null);
+        localStorage.setItem('currentTaskPoint', null);
         // Add any additional logic to update task status if needed
+        //clear user_id from task
     } else {
-        alert(`Keep up the good work!`);
+        alert(`Jiayou! You can do it!`);
     }
 }
 
@@ -86,6 +89,45 @@ async function fetchResidentTaskStatus() {
     localStorage.setItem('acceptedTask', has_tasks[0].has_task);
 }
 
+async function fetchCurrentTask() {
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    if (!residentId) {
+        console.error("Resident ID not set! Output: " + residentId);
+        return [];
+    }
+
+    const { data: has_tasks, error } = await supabase
+        .from("tasks")
+        .select("description, point")
+        .eq("user_id", residentId)
+        .eq("status", "IN_PROGRESS");
+
+    if (error) {
+        console.error("Error fetching task details for users:", error.message);
+        return [];
+    }
+    localStorage.setItem('currentTaskDesciption', has_tasks[0].description);
+    localStorage.setItem('currentTaskPoint', has_tasks[0].point);
+}
+
+async function fetchCurrentPoints() {
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    if (!residentId) {
+        console.error("Resident ID not set! Output: " + residentId);
+        return [];
+    }
+
+    const { data: currentPoint, error } = await supabase
+        .from("resident_account")
+        .select("points")
+        .eq("id", residentId); 
+    if (error) {
+        console.error("Error fetching task details for users:", error.message);
+        return [];
+    }
+    localStorage.setItem('currentPoint', currentPoint[0].points);
+}
+
 async function changeContent(page) {
     const contentDiv = document.getElementById('content');
 
@@ -93,7 +135,7 @@ async function changeContent(page) {
         case 'earn':
             // Fetch tasks and sort them by points in descending order
             const tasks = await fetchTasks();
-            const residentTaskStatus = await fetchResidentTaskStatus();
+            await fetchResidentTaskStatus();
             if (!tasks.length) {
                 contentDiv.innerHTML = `
                     <h2>Task Board</h2>
@@ -151,12 +193,17 @@ async function changeContent(page) {
             break;
 
         case 'resident-account':
+            await fetchCurrentTask();
+            await fetchCurrentPoints();
+            const taskDescription = localStorage.getItem('currentTaskDesciption');
+            const taskPoint = localStorage.getItem('currentTaskPoint');
+            const currentPoint = localStorage.getItem('currentPoint');
             contentDiv.innerHTML = `
                 <h2>Account Summary</h2>
                 <p>Hello! Here's your account summary:</p>
-                <div class="info-box"><strong>Current Accepted Task:</strong> Mop the level 3 floor.</div>
+                <div class="info-box"><strong>Current Accepted Task:</strong> ${taskDescription} (${taskPoint} Points) </div>
                 <button id="complete-button" class="complete-button">Mark as Completed</button>
-                <div class="info-box"><strong>Voucher Balance:</strong> 100 Points</div>
+                <div class="info-box"><strong>Voucher Balance:</strong> ${currentPoint} Points</div>
                 <div class="info-box"><strong>Transaction History:</strong> 21/1/2025 - Pen - 5 Points</div>
             `;
 
