@@ -4,6 +4,9 @@ import { getResidentId } from './shared.js';
 // Define global variables
 localStorage.setItem('acceptedTask', false); // Set the accepted task to false by default
 
+function returnHome() {
+    window.location.href = "resident.html";
+}
 // Function to log out
 function logout() {
     window.location.href = "index.html";
@@ -286,4 +289,4 @@ async function changeContent(page) {
     }
 }
 
-export { changeContent, logout }; // Export functions if needed for other files
+export { changeContent, logout, returnHome}; // Export functions if needed for other files
