@@ -2,7 +2,7 @@ import supabase from './supabase.js';
 import { getResidentId } from './shared.js';
 
 // Define global variables
-var accpetedTask = false; // Global variable to check if a task has been accepted
+localStorage.setItem('acceptedTask', false); // Set the accepted task to false by default
 
 // Function to log out
 function logout() {
@@ -10,7 +10,7 @@ function logout() {
 }
 
 async function acceptTask(taskId, taskDescription) {
-    if (accpetedTask) {
+    if (localStorage.getItem('acceptedTask')) {
         alert('You have already accepted a task. Please complete it before accepting another task.');
     } else {
 
@@ -33,6 +33,7 @@ async function acceptTask(taskId, taskDescription) {
             alert('Failed to accept task. Try again.');
         } else {
             alert(`You have successfully accepted "${taskDescription}"!`);
+            localStorage.setItem('acceptedTask', true); // Set the accepted task to true
             // Optionally moves to the account page after accepting a task 
             await changeContent('resident-account');
         }
@@ -82,7 +83,7 @@ async function fetchResidentTaskStatus() {
         return [];
     }
 
-    accpetedTask = has_task === "TRUE";
+    localStorage.setItem('acceptedTask', has_task);
 }
 
 async function changeContent(page) {
