@@ -12,11 +12,43 @@
 <body>
 <div id="app">
     <header>
+        <a href="#" onclick="returnHome()">
+            <img src="../assets/images/TransparentLogo.png"> 
+        </a>
         <h1>
             Muhammadiyah Mama Mart
         </h1>
         <button id="logout-button" onclick="logout()" class="logout-button">Logout</button>
     </header>
+    <style>
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative; /* Allows positioning of the h1 */
+            padding: 10px;
+        }
+    
+        .logo img {
+            height: 50px; /* Adjust to your preferred size */
+            width: auto;
+        }
+    
+        h1 {
+            position: absolute; /* Position the h1 independently */
+            left: 50%; /* Move to the center of the header */
+            transform: translateX(-50%); /* Adjust for centering */
+            margin: 0;
+            font-size: 24px; /* Adjust to your preferred size */
+            text-align: center;
+        }
+    
+        #logout-button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+        }
+    </style>
     <nav>
         <ul>
             <li>
