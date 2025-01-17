@@ -7,6 +7,12 @@
             "width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/src/styles/resident.css">
     <title>Resident Page</title>
+    <script type="module">
+        import { changeContent } from '/src/scripts/resident.js';
+    
+        // Attach it to the global `window` object if needed
+        window.changeContent = changeContent;
+    </script>
 </head>
 
 <body>
@@ -51,7 +57,6 @@
         </div>
     </main>
 </div>
-<script src="/src/scripts/resident.js"></script>
 </body>
 
 </html>
