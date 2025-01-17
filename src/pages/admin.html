@@ -7,6 +7,16 @@
             "width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/src/styles/admin.css">
     <title>Admin Page</title>
+    <script type="module">
+        import { changeContent } from '/src/scripts/admin.js';
+        import { logout } from '/src/scripts/admin.js';
+        import { returnHome } from '/src/scripts/admin.js';
+
+        // Attach it to the global `window` object if needed
+        window.logout = logout;
+        window.changeContent = changeContent;
+        window.returnHome = returnHome;
+    </script>
 </head>
 
 <body>
@@ -98,7 +108,7 @@
         </div>
     </main>
 </div>
-<script src="/src/scripts/admin.js"></script>
+<script type="module" src="/src/scripts/admin.js"></script>
 </body>
 
 </html>
