@@ -10,16 +10,17 @@ function logout() {
 }
 
 async function acceptTask(taskId, taskDescription) {
-    if (localStorage.getItem('acceptedTask')) {
+    if (localStorage.getItem('acceptedTask') === 'true') {
         alert('You have already accepted a task. Please complete it before accepting another task.');
     } else {
 
+        const residentId = getResidentId(); // Retrieve residentId from the shared module
+
         const { error: taskError } = await supabase
             .from('tasks')
-            .update({ status: 'IN_PROGRESS' })
+            .update({ status: 'IN_PROGRESS', user_id: residentId }) // Update task status to 'IN_PROGRESS' and assign resident ID
             .eq('id', taskId);
 
-        const residentId = getResidentId(); // Retrieve residentId from the shared module
         const { error: residentAccountError } = await supabase
             .from('resident_account')
             .update({ has_task: 'TRUE' })
@@ -73,7 +74,7 @@ async function fetchResidentTaskStatus() {
         return [];
     }
 
-    const { data: has_task, error } = await supabase
+    const { data: has_tasks, error } = await supabase
         .from("resident_account")
         .select("has_task")
         .eq("id", residentId);
@@ -82,8 +83,7 @@ async function fetchResidentTaskStatus() {
         console.error("Error fetching task status:", error.message);
         return [];
     }
-
-    localStorage.setItem('acceptedTask', has_task);
+    localStorage.setItem('acceptedTask', has_tasks[0].has_task);
 }
 
 async function changeContent(page) {
