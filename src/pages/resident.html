@@ -9,8 +9,10 @@
     <title>Resident Page</title>
     <script type="module">
         import { changeContent } from '/src/scripts/resident.js';
+        import { logout } from '/src/scripts/resident.js';
     
         // Attach it to the global `window` object if needed
+        window.logout = logout;
         window.changeContent = changeContent;
     </script>
 </head>
@@ -57,6 +59,7 @@
         </div>
     </main>
 </div>
+<script type="module" src="../scripts/resident.js"></script>
 </body>
 
 </html>

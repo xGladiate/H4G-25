@@ -1,6 +1,5 @@
 import supabase from "./supabase.js";
-
-var residentId = null; // Global variable to store the resident ID
+import { setResidentId } from './shared.js';
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -10,7 +9,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 
     const { data: users, error } = await supabase
         .from("credentials")
-        .select("role")
+        .select("role, id")
         .eq("username", username)
         .eq("password", password);
 
@@ -24,7 +23,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     if (role == 'ADMIN') {
         window.location.href = "admin.html";
     } else if (role == 'RESIDENT') {
-        residentId = users[0].id;
+        setResidentId(users[0].id);
         window.location.href = "resident.html";
     } else {
         alert("Unknown user role.");

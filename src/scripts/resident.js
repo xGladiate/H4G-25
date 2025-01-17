@@ -1,8 +1,8 @@
 import supabase from './supabase.js';
+import { getResidentId } from './shared.js';
 
 // Define global variables
-// var residentId = null; // Global variable to store the resident ID
-var accpetedTask = false; // Global variable to check if a task has been accepted
+localStorage.setItem('acceptedTask', false); // Set the accepted task to false by default
 
 // Function to log out
 function logout() {
@@ -10,26 +10,34 @@ function logout() {
 }
 
 async function acceptTask(taskId, taskDescription) {
-    await fetchResidentTaskStatus();
-    if (accpetedTask) {
+    if (localStorage.getItem('acceptedTask') === 'true') {
         alert('You have already accepted a task. Please complete it before accepting another task.');
-    }
-    const { data, error } = await supabase
-        .from('tasks')
-        .update({ status: 'IN_PROGRESS' })
-        .eq('id', taskId);
-
-    if (error) {
-        console.error('Error accepting task:', error.message);
-        alert('Failed to accept task. Try again.');
     } else {
-        const { data, error } = await supabase
+
+        const residentId = getResidentId(); // Retrieve residentId from the shared module
+
+        const { error: taskError } = await supabase
+            .from('tasks')
+            .update({ status: 'IN_PROGRESS', user_id: residentId }) // Update task status to 'IN_PROGRESS' and assign resident ID
+            .eq('id', taskId);
+
+        const { error: residentAccountError } = await supabase
             .from('resident_account')
             .update({ has_task: 'TRUE' })
             .eq('id', residentId);
-        alert(`You have successfully accepted "${taskDescription}"!`);
-        // Optionally moves to the account page after accepting a task 
-        await changeContent('resident-account');
+
+        if (taskError) {
+            console.error('Error accepting task:', taskError.message);
+            alert('Failed to accept task. Try again.');
+        } else if (residentAccountError) {
+            console.error('Error accepting task:', residentAccountError.message);
+            alert('Failed to accept task. Try again.');
+        } else {
+            alert(`You have successfully accepted "${taskDescription}"!`);
+            localStorage.setItem('acceptedTask', true); // Set the accepted task to true
+            // Optionally moves to the account page after accepting a task 
+            await changeContent('resident-account');
+        }
     }
 }
 
@@ -60,16 +68,22 @@ async function fetchTasks() {
 }
 
 async function fetchResidentTaskStatus() {
-    const { data: has_task, error: cannot_get_status } = await supabase
-        .from(`resident_account`)
-        .select('has_task')
-        .eq('id', residentId); //check the task status of the user
-    if (cannot_get_status) {
-        console.error('Error fetching tasks:', error.message);
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    if (!residentId) {
+        console.error("Resident ID not set! Output: " + residentId);
         return [];
     }
-    accpetedTask = has_task === "TRUE" || has_task === "true";
-    return; 
+
+    const { data: has_tasks, error } = await supabase
+        .from("resident_account")
+        .select("has_task")
+        .eq("id", residentId);
+
+    if (error) {
+        console.error("Error fetching task status:", error.message);
+        return [];
+    }
+    localStorage.setItem('acceptedTask', has_tasks[0].has_task);
 }
 
 // function to buy a product from the store
@@ -105,6 +119,7 @@ async function changeContent(page) {
         case 'earn':
             // Fetch tasks and sort them by points in descending order
             const tasks = await fetchTasks();
+            const residentTaskStatus = await fetchResidentTaskStatus();
             if (!tasks.length) {
                 contentDiv.innerHTML = `
                     <h2>Task Board</h2>
@@ -149,7 +164,6 @@ async function changeContent(page) {
                     const taskId = e.target.getAttribute('data-task-id');
                     const taskDescription = e.target.getAttribute('data-description');
                     await acceptTask(taskId, taskDescription); // Pass task ID to the `acceptTask` function
-                    accpeted_task = true; // Set to true after accepting a task
                 });
             });
             break;
@@ -233,6 +247,5 @@ async function changeContent(page) {
             contentDiv.innerHTML = '<h2>Page not found!</h2>';
     }
 }
-
 
 export { changeContent, logout }; // Export functions if needed for other files
