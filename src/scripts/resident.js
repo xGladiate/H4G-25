@@ -44,20 +44,47 @@ async function acceptTask(taskId, taskDescription) {
     }
 }
 
+async function updateTaskStatusToCompleted() {
+    const residentId = getResidentId(); // Retrieve residentId from the shared module
+    const { error: taskError } = await supabase
+        .from('tasks')
+        .update({ status: 'COMPLETED', user_id: residentId }) // Update task status to 'IN_PROGRESS' and assign resident ID
+        .eq('id', localStorage.getItem('currentTaskId'));
+
+        //Move this to the admin side after the admin Checked button is being created
+        const { error: residentAccountError } = await supabase
+        .from('resident_account')
+        .update({ has_task: 'FALSE' })
+        .eq('id', residentId);
+
+    if (taskError) {
+        console.error('Error completing task:', taskError.message);
+        alert('Failed to complete task. Try again.');
+    } 
+    
+    if (residentAccountError) {
+        console.error('Error completeing task:', residentAccountError.message);
+        alert('Failed to complete task. Try again.');
+    } 
+
+    return; 
+}
+
 
 // Function to complete a task
 async function completeTask(taskName) {
-    const userConfirmed = confirm(`Are you sure that you have completed "${taskName}"?`);
+    const userConfirmed = confirm(`Are you sure that you have complete the task: "${taskName}"?`);
     if (userConfirmed) {
-        alert(`You have successfully completed "${taskName}".`);
-        localStorage.setItem('currentTaskDesciption', null);
-        localStorage.setItem('currentTaskPoint', null);
-        // Add any additional logic to update task status if needed
-        //clear user_id from task
+        await updateTaskStatusToCompleted();
+        alert(`You have successfully completed "${taskName}".\n` + `Your submission would be sent to the admins to check before vouchers are allocated!`);
+        localStorage.setItem('acceptedTask', false);
+        await changeContent('resident-account');
     } else {
         alert(`Jiayou! You can do it!`);
     }
 }
+
+
 
 // Function to fetch tasks dynamically
 async function fetchTasks() {
@@ -101,7 +128,7 @@ async function fetchCurrentTask() {
 
     const { data: has_tasks, error } = await supabase
         .from("tasks")
-        .select("description, point")
+        .select("*")
         .eq("user_id", residentId)
         .eq("status", "IN_PROGRESS");
 
@@ -109,8 +136,14 @@ async function fetchCurrentTask() {
         console.error("Error fetching task details for users:", error.message);
         return [];
     }
+    
+    if (!has_tasks.length) {
+        return [];
+    }
+    console.log(has_tasks);
     localStorage.setItem('currentTaskDesciption', has_tasks[0].description);
     localStorage.setItem('currentTaskPoint', has_tasks[0].point);
+    localStorage.setItem('currentTaskId', has_tasks[0].id);
 }
 
 async function fetchCurrentPoints() {
@@ -254,20 +287,27 @@ async function changeContent(page) {
             break;
 
         case 'resident-account':
-            await fetchCurrentTask();
+            let currentAcceptedTaskLabel = "You have no task currently!"; 
+            let completeButtonHTML = ''; // Default: no button
             await fetchCurrentPoints();
-            const taskDescription = localStorage.getItem('currentTaskDesciption');
-            const taskPoint = localStorage.getItem('currentTaskPoint');
             const name = localStorage.getItem('name');
             const currentPoint = localStorage.getItem('currentPoint');
-            const currentAcceptedTaskLabel = "Current Accepted Task: " + taskDescription + " (" + taskPoint + " Points)";
+
+            if (localStorage.getItem('acceptedTask') === 'true') {
+                await fetchCurrentTask();
+                const taskDescription = localStorage.getItem('currentTaskDesciption');
+                const taskPoint = localStorage.getItem('currentTaskPoint');
+                currentAcceptedTaskLabel = taskDescription + " (" + taskPoint + " Vouchers)"; 
+                completeButtonHTML = `<button id="complete-button" class="complete-button">Mark as Completed</button>`;
+            }
+            
             contentDiv.innerHTML = `
                 <h2>Account Summary</h2>
                 <p>Hello ${name}! Here's your account summary:</p>
                 <label for="name"><strong>Current Accepted Task</strong></label>
                 <div class="info-box"> 
-                    ${taskDescription} (${taskPoint} Points) 
-                    <button id="complete-button" class="complete-button">Mark as Completed</button>
+                    ${currentAcceptedTaskLabel}
+                    ${completeButtonHTML}                
                 </div>
                 <label for="name"><strong>Voucher Balance</strong></label>
                 <div class="info-box"> 
@@ -280,7 +320,7 @@ async function changeContent(page) {
             `;
 
             document.getElementById('complete-button').addEventListener('click', () => {
-                completeTask('Mop the level 3 floor');
+                completeTask(localStorage.getItem('currentTaskDesciption'));
             });
             break;
 
