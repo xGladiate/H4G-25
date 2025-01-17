@@ -119,13 +119,14 @@ async function fetchCurrentPoints() {
 
     const { data: currentPoint, error } = await supabase
         .from("resident_account")
-        .select("points")
+        .select("points, name")
         .eq("id", residentId); 
     if (error) {
         console.error("Error fetching task details for users:", error.message);
         return [];
     }
     localStorage.setItem('currentPoint', currentPoint[0].points);
+    localStorage.setItem('name', currentPoint[0].name);
 }
 
 // function to buy a product from the store
@@ -254,14 +255,25 @@ async function changeContent(page) {
             await fetchCurrentPoints();
             const taskDescription = localStorage.getItem('currentTaskDesciption');
             const taskPoint = localStorage.getItem('currentTaskPoint');
+            const name = localStorage.getItem('name');
             const currentPoint = localStorage.getItem('currentPoint');
+            const currentAcceptedTaskLabel = "Current Accepted Task: " + taskDescription + " (" + taskPoint + " Points)";
             contentDiv.innerHTML = `
                 <h2>Account Summary</h2>
-                <p>Hello! Here's your account summary:</p>
-                <div class="info-box"><strong>Current Accepted Task:</strong> ${taskDescription} (${taskPoint} Points) </div>
-                <button id="complete-button" class="complete-button">Mark as Completed</button>
-                <div class="info-box"><strong>Voucher Balance:</strong> ${currentPoint} Points</div>
-                <div class="info-box"><strong>Transaction History:</strong> 21/1/2025 - Pen - 5 Points</div>
+                <p>Hello ${name}! Here's your account summary:</p>
+                <label for="name"><strong>Current Accepted Task</strong></label>
+                <div class="info-box"> 
+                    ${taskDescription} (${taskPoint} Points) 
+                    <button id="complete-button" class="complete-button">Mark as Completed</button>
+                </div>
+                <label for="name"><strong>Voucher Balance</strong></label>
+                <div class="info-box"> 
+                    ${currentPoint} Points 
+                </div>
+                <label for="name"><strong>Transaction History</strong></label>
+                <div class="info-box"> 
+                    21/1/2025 - Pen - 5 Points
+                </div>
             `;
 
             document.getElementById('complete-button').addEventListener('click', () => {
