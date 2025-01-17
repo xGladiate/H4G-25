@@ -24,3 +24,19 @@ Below are the rough layout for our web application
 ## More Details
  - [Our Project Google Drive](https://drive.google.com/drive/folders/1OZFlyInFQFRLIg_nF6LDg6iF9TBZp75k)
  - [Our Planning Document](https://docs.google.com/document/d/1asOftW9DxqmLOkNGgwGRJ0LF5b2FCQBu2HflGBt7xXo/edit?usp=sharing)
+
+## How to Start 
+1. Download the code
+2. Add the code to a new folder
+
+### Method 1
+3. Open the terminal and navigate to the folder containing the code
+4. Run `python -m http.server 8000`
+5. Open your web browser and navigate to [http://localhost:8000/](http://localhost:8000/), which should bring you to the login page of the web app
+
+### Method 2
+3. Open the code in VS Code
+4. Download `live server` from `extensions`
+5. Right-click on `index.html` at `src/pages/index.html`
+6. Select `Open with Live Server`
+7. Navigate to your browser, which should bring you to the login page of the web app
