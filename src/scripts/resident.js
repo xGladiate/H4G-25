@@ -1,11 +1,19 @@
-import supabase from './supabase.js'; // Import the existing Supabase client
+import supabase from './supabase.js';
+
+// Define global variables
+// var residentId = null; // Global variable to store the resident ID
+var accpetedTask = false; // Global variable to check if a task has been accepted
 
 // Function to log out
 function logout() {
     window.location.href = "index.html";
 }
 
-async function acceptTask(taskId) {
+async function acceptTask(taskId, taskDescription) {
+    await fetchResidentTaskStatus();
+    if (accpetedTask) {
+        alert('You have already accepted a task. Please complete it before accepting another task.');
+    }
     const { data, error } = await supabase
         .from('tasks')
         .update({ status: 'IN_PROGRESS' })
@@ -15,9 +23,13 @@ async function acceptTask(taskId) {
         console.error('Error accepting task:', error.message);
         alert('Failed to accept task. Try again.');
     } else {
-        alert(`Task ${taskId} successfully accepted!`);
-        // Optionally refresh the task board
-        await changeContent('earn');
+        const { data, error } = await supabase
+            .from('resident_account')
+            .update({ has_task: 'TRUE' })
+            .eq('id', residentId);
+        alert(`You have successfully accepted "${taskDescription}"!`);
+        // Optionally moves to the account page after accepting a task 
+        await changeContent('resident-account');
     }
 }
 
@@ -46,6 +58,20 @@ async function fetchTasks() {
     }
     return tasks;
 }
+
+async function fetchResidentTaskStatus() {
+    const { data: has_task, error: cannot_get_status } = await supabase
+        .from(`resident_account`)
+        .select('has_task')
+        .eq('id', residentId); //check the task status of the user
+    if (cannot_get_status) {
+        console.error('Error fetching tasks:', error.message);
+        return [];
+    }
+    accpetedTask = has_task === "TRUE" || has_task === "true";
+    return; 
+}
+
 async function changeContent(page) {
     const contentDiv = document.getElementById('content');
 
@@ -83,7 +109,7 @@ async function changeContent(page) {
                     <div class="info-box">
                         <strong>#${rank}</strong> ${task.description} 
                         (${task.point} Points)
-                        <button class="accept-button" data-task-id="${task.id}">
+                        <button class="accept-button" data-description="${task.description}" data-task-id="${task.id}">
                             Accept
                         </button>
                     </div>
@@ -95,7 +121,9 @@ async function changeContent(page) {
             document.querySelectorAll('.accept-button').forEach((button) => {
                 button.addEventListener('click', async (e) => {
                     const taskId = e.target.getAttribute('data-task-id');
-                    await acceptTask(taskId); // Pass task ID to the `acceptTask` function
+                    const taskDescription = e.target.getAttribute('data-description');
+                    await acceptTask(taskId, taskDescription); // Pass task ID to the `acceptTask` function
+                    accpeted_task = true; // Set to true after accepting a task
                 });
             });
             break;
